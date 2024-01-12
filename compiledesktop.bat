@@ -1,0 +1,1 @@
+g++ source/**.cpp C:/dev/projects/liamlib/src/**.cpp -o raylibGJ2.exe -Wall -IC:/dev/raylib/srcdesk -Iheaders -IC:/dev/projects/liamlib/headers -LC:/dev/raylib/srcdesk -lraylib -lopengl32 -lgdi32 -lwinmm -DPLATFORM_DESKTOP -std=c++20 -static && raylibGJ2.exe
