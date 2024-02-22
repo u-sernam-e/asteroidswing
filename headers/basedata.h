@@ -23,4 +23,11 @@ void initBD(BaseData& b);
 void updateBD(BaseData& b);
 void drawBD(BaseData& b);
 
+
+// also this is here
+#define GLSLVERSION 330
+#if defined(PLATFORM_WEB)
+    #define GLSLVERSION 100
+#endif
+
 #endif

@@ -8,21 +8,34 @@ class Ship : public Ob
 private:
     InteractionData* m_iData;
 
-    Web m_web;
-
     Vector2 m_pos;
+    float m_angle;
+
     Vector2 m_vel;
     Vector2 m_prevVel;
 
-    const float M_GRAVITY{5};
-    const float M_BOOSTSTRENGTH{0.02};
+    bool m_unClockwise;
+
+    bool m_dead;
+    float m_deathTime;
+    
+    float m_startTime;
+
+    const float M_STARTSPEED{370};
 
     std::vector<Vector2> generateDrawPoints();
-    Vector2 getChangeInVel();
+    float speed();
+    Vector2 vel();
 
-    void updateWeb();
+    void movePositionToOnScreen();
+
+    void updateBounces();
+    void updateMovement();
+    void updateCollision();
+    void updateIData();
 public:
     void init(InteractionData* id);
+    void reset();
     void update() override;
     void draw() override;
 };

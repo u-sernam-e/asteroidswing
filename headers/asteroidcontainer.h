@@ -17,9 +17,15 @@ private:
     void updateAsteroidIData();
 
     void spawnAsteroid();
+    void spawnAsteroidChildren(Vector2 pos, int hp, Color col);
+
+    void playRandomExplosionSound();
+    
     void destroyAsteroid(int index);
+    void explodeAsteroid(int index);
 public:
     void init(InteractionData* id);
+    void reset();
     void update() override;
     void draw() override;
 };

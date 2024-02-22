@@ -18,9 +18,9 @@ void updateDrawFrame()
 
 int main()
 {
-	InitWindow(1000, 700, "Asteroid Swing");
+	InitWindow(1000, 562, "Asteroid Swing");
     InitAudioDevice();
-	SetTargetFPS(144);
+	SetTargetFPS(60);
 	init(G);
 
 #if defined(PLATFORM_WEB)

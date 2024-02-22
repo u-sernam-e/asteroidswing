@@ -1,0 +1,1 @@
+g++ source/**.cpp /home/liam/dev/projects/liamlib/src/**.cpp -o asteroidswing.out -Wall -I /home/liam/dev/raylib/src/ -I headers/ -I /home/liam/dev/projects/liamlib/headers/ -L /home/liam/dev/raylib/src/ -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -DPLATFORM_DESKTOP && ./asteroidswing.out

@@ -1,0 +1,2 @@
+source /home/liam/dev/emsdk/emsdk_env.sh
+em++ -o index.html source/**.cpp /home/liam/dev/projects/liamlib/src/**.cpp -Os -Wall /home/liam/dev/raylibweb/src/libraylib.a -I /home/liam/dev/raylibweb/src/ -I headers/ -I /home/liam/dev/projects/liamlib/headers/ -L /home/liam/dev/raylibweb/src/libraylib.a -s USE_GLFW=3 -s EXPORTED_RUNTIME_METHODS=ccall --shell-file /home/liam/dev/raylibweb/src/shell.html -DPLATFORM_WEB -sASSERTIONS -Wno-narrowing -sGL_ENABLE_GET_PROC_ADDRESS -sALLOW_MEMORY_GROWTH --preload-file res

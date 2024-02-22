@@ -1,102 +1,148 @@
 #include "ship.h"
 #include <cmath>
 
-Vector2 Ship::getChangeInVel()
+void Ship::init(InteractionData* id)
 {
-	return (m_vel - m_prevVel)/lowerLimitFrameTime();
+	m_iData = id;
+}
+
+void Ship::reset()
+{
+	m_pos = getScreenCenter();
+	m_angle = 0;
+
+	m_dead = false;
+	
+	m_startTime = m_iData->bd.gt.currentTime();
+}
+
+float Ship::speed()
+{
+	return M_STARTSPEED + m_iData->bd.gt.timeSince(m_startTime) * 1.5;
+}
+
+Vector2 Ship::vel()
+{
+	return floatAngleToVec2(speed(), m_angle);
 }
 
 std::vector<Vector2> Ship::generateDrawPoints()
 {
-	float stretchAmount{std::pow(1.01, getRotatedVec2(getChangeInVel(), {0, 0}, vec2ToAngle(m_vel)).x)};
-	if (stretchAmount > 2) stretchAmount = 2;
-	if (stretchAmount < .5) stretchAmount = 0.5;
-
 	std::vector<Vector2> output{
-		m_pos + Vector2{20*stretchAmount, 0},
-		m_pos + Vector2{-15*stretchAmount, 10/stretchAmount},
-		m_pos + Vector2{-10*stretchAmount, 0},
-		m_pos + Vector2{-15*stretchAmount, -10/stretchAmount}
+		m_pos + Vector2{15, 0},
+		m_pos + Vector2{-10, 10},
+		m_pos + Vector2{-7, 0},
+		m_pos + Vector2{-10, -10}
 	};
 
 	for (auto& p : output)
 	{
-		p = getRotatedVec2(p, m_pos, vec2ToAngle(m_vel));
+		p = getRotatedVec2(p, m_pos, m_angle);
 	}
 
 	return output;
 }
 
-std::vector<Vector2> Ship::generateWebDrawPoints()
+void Ship::updateIData()
 {
-	std::vector<Vector2> output{m_pos, m_webPos};
-	output[1] = m_webPos;
+	m_iData->ship.pos = m_pos;
+	m_iData->ship.vel = vel();
 
-	std::vector<Vector2> shipPoints{generateDrawPoints()};
+	m_iData->ship.dead = m_dead;
+	m_iData->ship.deathTime = m_deathTime;
 
-	for (int i{}; i < shipPoints.size(); ++i)
+	m_iData->ship.startTime = m_startTime;
+
+	m_iData->ship.drawPoints = generateDrawPoints();
+}
+
+void Ship::movePositionToOnScreen()
+{
+	if (m_pos.x < 0)
+		m_pos.x = 0;
+	else if (m_pos.x > getScreenSize().x)
+		m_pos.x = getScreenSize().x;
+
+	if (m_pos.y < 0)
+		m_pos.y = 0;
+	else if (m_pos.y > getScreenSize().y)
+		m_pos.y = getScreenSize().y;
+}
+
+void Ship::updateBounces()
+{
+	if ((m_pos.x < 0 && vel().x < 0) || (m_pos.x > getScreenSize().x && vel().x > 0) || (m_pos.y < 0 && vel().y < 0) || (m_pos.y > getScreenSize().y && vel().y > 0))
 	{
-		if (CheckCollisionLines(m_pos, m_webPos, shipPoints[i], shipPoints[(i+1)%shipPoints.size()], &output[0]))
-			break;
-	}
-	return output;
-}
-
-void Ship::init(InteractionData* id)
-{
-	m_iData = id;
+		float newAngle{m_angle};
+		if ((m_pos.y < 0 && vel().y < 0) || (m_pos.y > getScreenSize().y && vel().y > 0))
+			newAngle -= 180;
+			
+		if (m_angle < 180)
+			newAngle -= 180;
+		newAngle -= 90;
+		newAngle = -newAngle;
+		newAngle += 90;
+		if (m_angle < 180)
+			newAngle += 180;
 	
-	m_pos = getScreenSize()/2;
-	m_vel = {0, 0};
-	m_prevVel = {0, 0};
+		if (m_iData->web.active)
+		{
+			m_unClockwise = !m_unClockwise;
+			if (!isPointOnScreen(m_iData->web.endPos))
+				newAngle = m_angle - 180;
+		}
+		
+		m_angle = newAngle;
 
-	m_web.init();
+		movePositionToOnScreen();
+	}
+
+	if (!m_iData->web.active || m_iData->web.justFired)
+		m_unClockwise = false;
 }
 
-void Ship::updateWeb()
+void Ship::updateMovement()
 {
-	if (m_webActive)
+	if (m_iData->web.active)
 	{
-		Vector2 webVec{m_webPos - m_pos};
+		float angleAdd = (speed()*lowerLimitFrameTime()*RAD2DEG)/m_iData->web.length;
+		if (!m_iData->web.clockwise != m_unClockwise)
+			angleAdd = -angleAdd;
 
-		if (vec2ToFloat(webVec) > m_webTautLength)
-			m_vel += normalizedVec2(webVec) * (vec2ToFloat(webVec) - m_webTautLength) * M_WEBSTRENGTH * lowerLimitFrameTime();
-
-		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-		{
-			m_webActive = false;
-		}
-		if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || GetTouchPointCount() > 1)
-		{
-			m_webActive = false;
-			m_vel = webVec * M_BOOSTSTRENGTH;
-		}
+		m_angle += angleAdd;
 	}
-	else
+	
+	m_pos += vel() * lowerLimitFrameTime();
+}
+
+void Ship::updateCollision()
+{
+	for (auto& a : m_iData->asteroids)
 	{
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+		if (CheckCollisionPointCircle(m_pos, a.pos, a.rad) && !m_dead)
 		{
-			m_webActive = true;
-			m_webStartTime = m_iData->bd.gt.currentTime();
-			m_webPos = GetMousePosition();
-			m_webTautLength = vec2distance(m_webPos, m_pos);
+			m_iData->explosions.push_back({m_iData->bd.gt.currentTime(), m_pos, WHITE});
+			m_deathTime = m_iData->bd.gt.currentTime();
+			m_dead = true;
+			PlaySound(m_iData->bd.ss.get("res/lose.wav"));
 		}
 	}
 }
 
 void Ship::update()
 {
-	m_prevVel = m_vel;
-	
-	updateWeb();
+	if (!m_dead)
+	{
+		updateBounces();
+		updateMovement();
+		updateCollision();
+	}
 
-	m_vel.y += M_GRAVITY * lowerLimitFrameTime();
-	m_pos += m_vel;
+	updateIData();
 }
 
 void Ship::draw()
 {
-	PolyLightShader::drawPolyLights(generateDrawPoints(), 0.75, BLUE, m_iData->PLShad, m_iData->bd);
-	if (m_webActive)
-		PolyLightShader::drawPolyLights(generateWebDrawPoints(), 0.5, WHITE, m_iData->PLShad, m_iData->bd);
+	if (!m_dead)
+		PolyLightShader::drawPolyLights(generateDrawPoints(), 0.6, BLUE, m_iData->PLShad, m_iData->bd);
 }

@@ -3,9 +3,9 @@
 
 void initBD(BaseData& b)
 {
-	b.ts.init({"res/error.png", "res/1px.png"});
-    b.fs.init({});
-    b.ss.init({}); 
+	b.ts.init({"res/error.png", "res/1px.png", "res/space.png", "res/help.png", "res/lose.png", "res/pausebutton.png"});
+    b.fs.init({"res/boleh.ttf"});
+    b.ss.init({"res/ex1.wav", "res/web.wav", "res/lose.wav"}); 
     b.ms.init({}); 
 
     b.ui.init();

@@ -4,16 +4,36 @@
 
 class Web : public Ob
 {
+private:
+    InteractionData* m_iData;
+
     Vector2 m_startPos;
     Vector2 m_endPos;
 
     float m_startTime;
     bool m_active;
-    float m_tautLength;
+    bool m_justFired;
+    bool m_clockwise;
 
-    const float M_STRENGTH{0.5};
+    int m_keyUsed;
+    bool m_mouseUsed;
 
-    std::vector<Vector2> generateDrawPoints(Web& w, );
+    const float M_LENGTH{170};
+
+    void updateIData();
+    void updateWeb();
+    void destroyAsteroids();
+
+    Vector2 counterClockPoint();
+    Vector2 clockPoint();
+    std::vector<Vector2> generateDrawPoints();
+
+    void playSound();
+public:
+    void init(InteractionData* id);
+    void reset();
+    void update() override;
+    void draw() override;
 };
 
 #endif

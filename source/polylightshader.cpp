@@ -5,7 +5,7 @@ void PolyLightShader::init(PolyLightShader& PLShad)
 	if (IsShaderReady(PLShad.shad))
 		UnloadShader(PLShad.shad);
 
-    PLShad.shad = LoadShader(0, "res/shader/330/polylightshader.fs");
+    PLShad.shad = LoadShader(0, TextFormat("res/shader/%i/polylight.fs", GLSLVERSION));
 
 	for (int i{}; i < PLShad.pointsLoc.size(); ++i)
 	{

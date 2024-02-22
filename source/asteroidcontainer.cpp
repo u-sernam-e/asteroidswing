@@ -6,6 +6,8 @@ void AsteroidContainer::initNewAsteroidIData()
 		m_asteroids[m_asteroids.size()-1].pos(),
 		m_asteroids[m_asteroids.size()-1].rad(),
 		m_asteroids[m_asteroids.size()-1].hp(),
+		m_iData->bd.gt.currentTime(),
+		1,
 		false
 	});
 }
@@ -16,13 +18,9 @@ void AsteroidContainer::updateAsteroidIData()
 	{
 		for (int i{}; i < m_asteroids.size(); ++i)
 		{
-			m_iData->asteroids[i].pos = m_asteroids[i].pos(); // update pos
-
-			if (m_iData->asteroids[i].shouldBeDestroyed) // if the asteroid should be destroyed
-			{
-				destroyAsteroid(i);
-				--i;
-			}
+			m_iData->asteroids[i].pos = m_asteroids[i].pos();
+			m_iData->asteroids[i].rad = m_asteroids[i].rad();
+			m_iData->asteroids[i].hp = m_asteroids[i].hp();
 		}
 	}
 	else
@@ -42,27 +40,59 @@ void AsteroidContainer::spawnAsteroid()
 
 
 	m_asteroids.push_back({});
-	m_asteroids[m_asteroids.size()-1].init(m_iData, asteroidHP, pos, vel, getRandomFloat(-100, 100));
+	m_asteroids[m_asteroids.size()-1].init(m_iData, asteroidHP, pos, vel, getRandomFloat(-100, 100), randomSaturatedColor());
 
 	initNewAsteroidIData();
 }
 
-void AsteroidContainer::destroyAsteroid(int index) // in here it has to spawn 3 new asteroids and trigger some sort of particle effect, u can do that afer u make the player
+void AsteroidContainer::spawnAsteroidChildren(Vector2 pos, int hp, Color col)
+{
+	float angle{getRandomFloat(0, 360)};
+	for (int i{}; i < 3; ++i)
+	{
+		Vector2 vel{floatAngleToVec2(getRandomFloat(50, 100), angle + i*(360/3))};
+			
+		m_asteroids.push_back({});
+		m_asteroids[m_asteroids.size()-1].init(m_iData, hp - 1, pos, vel, getRandomFloat(-100, 100), col);
+
+		initNewAsteroidIData();
+	}
+}
+
+void AsteroidContainer::destroyAsteroid(int index)
 {
 	m_iData->asteroids.erase(m_iData->asteroids.begin() + index);
 	m_asteroids.erase(m_asteroids.begin() + index);
 }
 
+void AsteroidContainer::playRandomExplosionSound()
+{
+	PlaySound(m_iData->bd.ss.get("res/ex1.wav"));
+}
+
+void AsteroidContainer::explodeAsteroid(int index) // for when it is exploded by player
+{
+	playRandomExplosionSound();
+	m_iData->score.asteroidScore += m_asteroids[index].hp() * 100;
+	m_iData->explosions.push_back({m_iData->bd.gt.currentTime(), m_asteroids[index].pos(), getBrighterColor(m_asteroids[index].col(), 4)});
+	if (m_asteroids[index].hp() > 1)
+		spawnAsteroidChildren(m_asteroids[index].pos(), m_asteroids[index].hp(), m_asteroids[index].col());
+}
+
 void AsteroidContainer::init(InteractionData* id)
 {
 	m_iData = id;
+	
+	m_lastAsteroidTime = 0;
+	m_spawnRate = 1.5;
+}
 
-	id->asteroids.clear();
+void AsteroidContainer::reset()
+{
+	m_iData->asteroids.clear();
 	
 	m_asteroids.clear();
 	
-	m_lastAsteroidTime = 0;
-	m_spawnRate = 3;
 }
 
 void AsteroidContainer::update()
@@ -77,7 +107,13 @@ void AsteroidContainer::update()
 	{
 		m_asteroids[i].update();
 
-		if(m_asteroids[i].isOutOfBounds())
+		if (m_iData->asteroids[i].hp == m_asteroids[i].hp() - 1)
+		{
+			explodeAsteroid(i);
+			destroyAsteroid(i);
+			--i;
+		}
+		else if (m_asteroids[i].isOutOfBounds())
 		{
 			destroyAsteroid(i);
 			--i;

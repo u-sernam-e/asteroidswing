@@ -10,7 +10,7 @@ void Asteroid::generateDrawPoints() // more points when higher hp
 	for (int i{}; i < numPoints; ++i)
 	{
 		float angle{i*(360/numPoints)};
-		m_drawPoints.push_back(floatAngleToVec2(0.3 + static_cast<float>(getRandomFloat(-100, 100))/(2000), angle + getRandomFloat(-100, 100)/(2*numPoints))); // math to add some randomness
+		m_drawPoints.push_back(floatAngleToVec2(1 + static_cast<float>(getRandomFloat(-100, 100))/(2000), angle + getRandomFloat(-100, 100)/(2*numPoints))); // math to add some randomness
 	}
 }
 
@@ -25,7 +25,7 @@ std::vector<Vector2> Asteroid::getCurrentDrawPoints()
 	return output;
 }
 
-void Asteroid::init(InteractionData* id, int hp, Vector2 startPos, Vector2 vel, float rotVel)
+void Asteroid::init(InteractionData* id, int hp, Vector2 startPos, Vector2 vel, float rotVel, Color col)
 {
 	m_iData = id;
 
@@ -38,6 +38,9 @@ void Asteroid::init(InteractionData* id, int hp, Vector2 startPos, Vector2 vel, 
 	m_rotVel = rotVel;
 
 	m_hp = hp;
+
+	m_col = col;
+
 	generateDrawPoints();
 }
 
@@ -49,11 +52,5 @@ void Asteroid::update()
 void Asteroid::draw()
 {
 	std::vector<Vector2> points{getCurrentDrawPoints()};
-	PolyLightShader::drawPolyLights(points, 1, BEIGE, m_iData->PLShad, m_iData->bd);
-/*
-	DrawCircleV(pos(), 5, BLUE);
-	for (int i{0}; i < m_drawPoints.size(); ++i)
-	{
-		DrawCircleV(getRotatedVec2({pos().x + (m_drawPoints[i].x*100), pos().y + (m_drawPoints[i].y*100)}, pos(), rot()), 5, RED);
-	}*/
+	PolyLightShader::drawPolyLights(points, 1, m_col, m_iData->PLShad, m_iData->bd);
 }
